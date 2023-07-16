@@ -1,0 +1,174 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Default values for kyuubi.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Kyuubi server numbers
+replicaCount: 1
+
+image:
+  repository: apache/kyuubi
+  pullPolicy: IfNotPresent
+  tag: 1.7.1-spark
+
+imagePullSecrets: []
+
+# ServiceAccount used for Kyuubi create/list/delete pod in kubernetes
+serviceAccount:
+  create: true
+  name: ~
+
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods"]
+      verbs: ["create", "get","list", "delete","watch","update"]
+    - apiGroups: [""]
+      resources: ["services"]
+      verbs: ["create", "list", "delete"]
+    - apiGroups: [""]
+      resources: ["configmaps"]
+      verbs: ["create", "list", "delete"]
+    - apiGroups: [""]
+      resources: ["persistentvolumeclaims"]
+      verbs: ["create", "list", "delete"]
+server:
+  # Thrift Binary protocol (HiveServer2 compatible)
+  thriftBinary:
+    enabled: true
+    port: 10009
+    service:
+      type: ClusterIP
+      port: "{{ .Values.server.thriftBinary.port }}"
+      nodePort: ~
+      annotations: {}
+
+  # Thrift HTTP protocol (HiveServer2 compatible)
+  thriftHttp:
+    enabled: true
+    port: 10010
+    service:
+      type: ClusterIP
+      port: "{{ .Values.server.thriftHttp.port }}"
+      nodePort: ~
+      annotations: {}
+
+  # REST API protocol (experimental)
+  rest:
+    enabled: true
+    port: 10099
+    service:
+      type: ClusterIP
+      port: "{{ .Values.server.rest.port }}"
+      nodePort: ~
+      annotations: {}
+
+  # MySQL compatible text protocol (experimental)
+  mysql:
+    enabled: false
+    port: 3309
+    service:
+      type: ClusterIP
+      port: "{{ .Values.server.mysql.port }}"
+      nodePort: ~
+      annotations: {}
+
+kyuubiConfDir: /opt/kyuubi/conf
+kyuubiConf:
+  kyuubiEnv: |
+    export SPARK_HOME=/opt/kyuubi/externals/spark-3.3.2-bin-hadoop3
+    export SPARK_CONF_DIR=/opt/kyuubi/externals/spark-3.3.2-bin-hadoop3/conf
+    export SPARK_ENGINE_HOME=/opt/kyuubi/externals/engines/spark
+    export TRINO_ENGINE_HOME=/opt/kyuubi/externals/engines/trino
+    export HIVE_ENGINE_HOME=/opt/kyuubi/externals/engines/hive
+
+  kyuubiDefaults: |
+    kyuubi.authentication=NONE
+    spark.master=k8s://https://you-k8s-ip:6443
+    spark.kubernetes.container.image=apache/spark:v3.3.0
+    spark.kubernetes.file.upload.path=/tmp/spark
+    kyuubi.kubernetes.namespace=hivemetastore
+    spark.kubernetes.namespace=hivemetastore
+    kyuubi.frontend.bind.host=0.0.0.0
+    kyuubi.engine.type=SPARK_SQL
+    kyuubi.engine.share.level=USER
+    kyuubi.session.engine.initialize.timeout=PT3M
+    kyuubi.ha.namespace=hivemetastore
+    kyuubi.ha.addresses=zookeeper:2181
+    hive.metastore.uris=thrift://hivemetastore.hivemetastore.svc:9083
+    spark.submit.deployMode=cluster
+    spark.kubernetes.executor.volumes.persistentVolumeClaim.tmp-spark.mount.path=/tmp/spark
+    spark.kubernetes.executor.volumes.persistentVolumeClaim.tmp-spark.options.claimName=tmp-spark
+    spark.kubernetes.driver.volumes.persistentVolumeClaim.tmp-spark.mount.path=/tmp/spark
+    spark.kubernetes.driver.volumes.persistentVolumeClaim.tmp-spark.options.claimName=tmp-spark
+    spark.kubernetes.authenticate.driver.serviceAccountName=kyuubi
+
+  log4j2: ~
+
+# Command to launch Kyuubi server (templated)
+command: ~
+# Arguments to launch Kyuubi server (templated)
+args: ~
+
+# Environment variables (templated)
+env: []
+envFrom: []
+
+# Additional volumes for Kyuubi pod (templated)
+volumes:
+  - name: volume
+    persistentVolumeClaim:
+      claimName: tmp-spark
+volumeMounts:
+  - name: volume
+    mountPath: /tmp/spark
+
+
+# Additional init containers for Kyuubi pod (templated)
+initContainers: []
+# Additional containers for Kyuubi pod (templated)
+containers: []
+
+resources: {}
+
+# Liveness probe
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 10
+  successThreshold: 1
+
+# Readiness probe
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 10
+  successThreshold: 1
+
+# Constrain Kyuubi server pods to specific nodes
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+securityContext: {}
