@@ -101,24 +101,33 @@ kyuubiConf:
 
   kyuubiDefaults: |
     kyuubi.authentication=NONE
-    spark.master=k8s://https://you-k8s-ip:6443
-    spark.kubernetes.container.image=apache/spark:v3.3.0
+    spark.master=k8s://https://you-k8s-api:6443
+    spark.kubernetes.container.image=image
     spark.kubernetes.file.upload.path=/tmp/spark
-    kyuubi.kubernetes.namespace=hivemetastore
-    spark.kubernetes.namespace=hivemetastore
+    kyuubi.kubernetes.namespace=kyuubi
+    spark.kubernetes.namespace=kyuubi
     kyuubi.frontend.bind.host=0.0.0.0
     kyuubi.engine.type=SPARK_SQL
     kyuubi.engine.share.level=USER
     kyuubi.session.engine.initialize.timeout=PT3M
-    kyuubi.ha.namespace=hivemetastore
+    kyuubi.ha.namespace=kyuubi
     kyuubi.ha.addresses=zookeeper:2181
-    hive.metastore.uris=thrift://hivemetastore.hivemetastore.svc:9083
+    hive.metastore.uris=thrift://hive-metastore.hive-metastore:9083
     spark.submit.deployMode=cluster
     spark.kubernetes.executor.volumes.persistentVolumeClaim.tmp-spark.mount.path=/tmp/spark
     spark.kubernetes.executor.volumes.persistentVolumeClaim.tmp-spark.options.claimName=tmp-spark
     spark.kubernetes.driver.volumes.persistentVolumeClaim.tmp-spark.mount.path=/tmp/spark
     spark.kubernetes.driver.volumes.persistentVolumeClaim.tmp-spark.options.claimName=tmp-spark
     spark.kubernetes.authenticate.driver.serviceAccountName=kyuubi
+    spark.sql.catalogImplementation=hive
+    spark.hadoop.fs.s3a.access.key=S3_ACCESS_KEY
+    spark.hadoop.fs.s3a.secret.key=S3_SECRET_KEY
+    spark.hadoop.fs.s3a.endpoint=http://S3-ENDPOINT
+    spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+    spark.sql.warehouse.dir=s3a://S3BUCKET
+    spark.hadoop.fs.s3a.connection.ssl.enabled=false
+    spark.hadoop.fs.s3a.path.style.access=true
+    fs.s3a.fast.upload=true
 
   log4j2: ~
 
